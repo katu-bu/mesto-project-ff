@@ -24,7 +24,7 @@ export function createCard(
   likeButton.addEventListener("click", likeCard);
 
   // событиe: нажатие на картинку
-  imgElement.addEventListener("click", openPopupImage);
+  imgElement.addEventListener("click", () => openPopupImage(link, name));
 
   return card;
 }

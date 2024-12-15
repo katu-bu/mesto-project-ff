@@ -1,14 +1,14 @@
 // открытие и закрытие попапов
 
 export function openModal(popup) {
-  popup.classList.toggle("popup_is-opened");
-  popup.classList.toggle("popup_is-animated");
+  popup.classList.add("popup_is-opened");
+  popup.classList.add("popup_is-animated");
   document.addEventListener("keydown", handleEsc);
 }
 
 export function closeModal(popup) {
-  popup.classList.toggle("popup_is-opened");
-  popup.classList.toggle("popup_is-animated");
+  popup.classList.remove("popup_is-opened");
+  popup.classList.remove("popup_is-animated");
   document.removeEventListener("keydown", handleEsc);
 }
 

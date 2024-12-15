@@ -29,10 +29,9 @@ const profileDescription = document.querySelector(".profile__description");
 const popups = document.querySelectorAll(".popup");
 
 // открытие попапа с увеличенной картинкой
-function openPopupImage(evt) {
-  const link = evt.target.src;
-  const name = evt.target.alt;
+function openPopupImage(link, name) {
   imgPopupImage.src = link;
+  imgPopupImage.alt = name;
   captionPopupImage.textContent = name;
   openModal(popupImage);
 }
@@ -61,8 +60,8 @@ popups.forEach(function (popup) {
   });
 });
 
-// функция сохраняет новые данные в профиль, закрывает попап
-function handleFormSubmit(evt) {
+// функция сохраняет новые данные пользователя в профиль, закрывает попап
+function handleEditFormSubmit(evt) {
   evt.preventDefault();
   profileTitle.textContent = profileTitleInput.value;
   profileDescription.textContent = profileDescriptionInput.value;
@@ -70,7 +69,7 @@ function handleFormSubmit(evt) {
 }
 
 // событие: нажатие на кнопку "сохранить изменения"
-popupEditForm.addEventListener("submit", handleFormSubmit);
+popupEditForm.addEventListener("submit", handleEditFormSubmit);
 
 // функция сохраняет новое место в начало контейнера, очищает поля формы, закрывает попап
 function handleNewPlaceAdd(evt) {
@@ -85,8 +84,7 @@ function handleNewPlaceAdd(evt) {
   );
   cardsContainer.insertAdjacentElement("afterbegin", card);
   closeModal(popupNew);
-  title.value = "";
-  link.value = "";
+  popupNewForm.reset();
 }
 
 // событие: нажатие на кнопку "сохранить новое место"
