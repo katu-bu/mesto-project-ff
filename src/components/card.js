@@ -5,7 +5,8 @@ export function createCard(
   cardTmp,
   deleteCard,
   likeCard,
-  openPopupImage
+  openPopupImage,
+  createdByOtherUser
 ) {
   const card = cardTmp.querySelector(".card").cloneNode(true);
   const titleElement = card.querySelector(".card__title");
@@ -16,6 +17,10 @@ export function createCard(
   titleElement.textContent = name;
   imgElement.src = link;
   imgElement.alt = name;
+
+  if (createdByOtherUser) {
+    card.classList.add('card__other-user')
+  }
 
   // событие: нажатие на кнопку "удалить"
   deleteButton.addEventListener("click", deleteCard);

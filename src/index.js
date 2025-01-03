@@ -4,8 +4,8 @@ import "./pages/index.css";
 // импорт переменных / функций, подключённых из созданных модулей
 import { createCard, deleteCard, likeCard } from "./components/card.js";
 import { openModal, closeModal } from "./components/modal.js";
-import { initialCards } from "./components/cards.js";
-import { hideInputError, enableValidation, clearValidation} from "./components/validation.js";
+import { enableValidation, clearValidation} from "./components/validation.js";
+import { getAllCards, getCurrentUser, postNewCard } from './components/api.js';
 
 // темплейт карточки
 const cardTmp = document.querySelector("#card-template").content;
@@ -35,6 +35,8 @@ const selectors = {
   inputErrorClass: 'popup__input_type_error',
   errorClass: 'popup__error_visible'
 };
+const currentUser = getCurrentUser();
+const initialCards = getAllCards();
 
 // открытие попапа с увеличенной картинкой
 function openPopupImage(link, name) {
@@ -93,6 +95,7 @@ function handleNewPlaceAdd(evt) {
     openPopupImage
   );
   cardsContainer.insertAdjacentElement("afterbegin", card);
+  postNewCard({name: title.value, link: link.value});
   closeModal(popupNew);
   popupNewForm.reset();
   clearValidation(popupNewForm, selectors);
@@ -101,18 +104,26 @@ function handleNewPlaceAdd(evt) {
 // событие: нажатие на кнопку "сохранить новое место"
 popupNewForm.addEventListener("submit", handleNewPlaceAdd);
 
-// вывод всех карточек из массива на страницу
-initialCards.forEach(function (item) {
-  const card = createCard(
-    item.name,
-    item.link,
-    cardTmp,
-    deleteCard,
-    likeCard,
-    openPopupImage
-  );
-  cardsContainer.append(card);
-});
-
 // вызов функции валидации полей форм
 enableValidation(selectors);
+
+// вывод всех карточек на страницу
+Promise.all([currentUser, initialCards])
+.then(([user, cards]) => {
+  cards.forEach(function (item) {
+    const createdByOtherUser = (item.owner._id !== user._id);
+    const card = createCard(
+      item.name,
+      item.link,
+      cardTmp,
+      deleteCard,
+      likeCard,
+      openPopupImage,
+      createdByOtherUser
+    );
+    cardsContainer.append(card);
+  });
+})
+.catch((error) => {
+  console.log("Невозможно загрузить карточки с сервера", error)
+})
