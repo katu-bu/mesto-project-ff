@@ -5,7 +5,7 @@ import "./pages/index.css";
 import { createCard, deleteCard, likeCard } from "./components/card.js";
 import { openModal, closeModal } from "./components/modal.js";
 import { initialCards } from "./components/cards.js";
-import { hideInputError, enableValidation} from "./components/validation.js";
+import { hideInputError, enableValidation, clearValidation} from "./components/validation.js";
 
 // темплейт карточки
 const cardTmp = document.querySelector("#card-template").content;
@@ -28,6 +28,13 @@ const profileDescriptionInput = popupEditForm.elements.description;
 const profileTitle = document.querySelector(".profile__title");
 const profileDescription = document.querySelector(".profile__description");
 const popups = document.querySelectorAll(".popup");
+const selectors = {
+  formSelector: '.popup__form',
+  inputSelector: '.popup__input',
+  submitButtonSelector: '.popup__button',
+  inputErrorClass: 'popup__input_type_error',
+  errorClass: 'popup__error_visible'
+};
 
 // открытие попапа с увеличенной картинкой
 function openPopupImage(link, name) {
@@ -41,25 +48,15 @@ function openPopupImage(link, name) {
 editButton.addEventListener("click", function () {
   profileTitleInput.value = profileTitle.textContent;
   profileDescriptionInput.value = profileDescription.textContent;
-  cleanForm(popupEditForm);
+  clearValidation(popupEditForm, selectors);
   openModal(popupEdit);
 });
 
 // открытие попапа по нажатию на кнопку "создать новое место"
 addButton.addEventListener("click", function () {
-  cleanForm(popupNewForm);
+  clearValidation(popupNewForm, selectors);
   openModal(popupNew);
 });
-
-// возврат формы в исходное состояние
-function cleanForm(formElement) {
-  const inputList = Array.from(formElement.querySelectorAll(".popup__input"));
-  inputList.forEach((inputElement) => {
-    hideInputError(formElement, inputElement);
-  });
-  const saveButton = formElement.querySelector(".popup__button");
-  saveButton.removeAttribute("disabled");
-};
 
 // закрытие через нажатие на оверлей попапа или через кнопку закрытия попапа
 popups.forEach(function (popup) {
@@ -98,6 +95,7 @@ function handleNewPlaceAdd(evt) {
   cardsContainer.insertAdjacentElement("afterbegin", card);
   closeModal(popupNew);
   popupNewForm.reset();
+  clearValidation(popupNewForm, selectors);
 }
 
 // событие: нажатие на кнопку "сохранить новое место"
@@ -117,4 +115,4 @@ initialCards.forEach(function (item) {
 });
 
 // вызов функции валидации полей форм
-enableValidation();
+enableValidation(selectors);
