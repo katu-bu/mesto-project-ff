@@ -9,6 +9,29 @@
   margin: 0 29px 0 0;
 }
 
+.profile__image_overlay {
+  display: none;
+  width: 100%;
+  height: 100%;
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+  border-radius: 50%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.profile__image:hover .profile__image_overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.profile__image_icon {
+  display: block;
+  width: 26px;
+  height: 26px;
+  margin: auto;
+}
+
 @media screen and (max-width: 740px) {
   .profile__image {
     margin: 0 10px 0 0;

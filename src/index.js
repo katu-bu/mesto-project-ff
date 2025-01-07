@@ -4,8 +4,14 @@ import "./pages/index.css";
 // импорт переменных / функций, подключённых из созданных модулей
 import { createCard, deleteCard, likeCard } from "./components/card.js";
 import { openModal, closeModal } from "./components/modal.js";
-import { enableValidation, clearValidation} from "./components/validation.js";
-import { getAllCards, getCurrentUser, postNewCard } from './components/api.js';
+import { enableValidation, clearValidation } from "./components/validation.js";
+import {
+  getAllCards,
+  getCurrentUser,
+  postNewCard,
+  updateProfile,
+  updateAvatar,
+} from "./components/api.js";
 
 // темплейт карточки
 const cardTmp = document.querySelector("#card-template").content;
@@ -29,14 +35,18 @@ const profileTitle = document.querySelector(".profile__title");
 const profileDescription = document.querySelector(".profile__description");
 const popups = document.querySelectorAll(".popup");
 const selectors = {
-  formSelector: '.popup__form',
-  inputSelector: '.popup__input',
-  submitButtonSelector: '.popup__button',
-  inputErrorClass: 'popup__input_type_error',
-  errorClass: 'popup__error_visible'
+  formSelector: ".popup__form",
+  inputSelector: ".popup__input",
+  submitButtonSelector: ".popup__button",
+  inputErrorClass: "popup__input_type_error",
+  errorClass: "popup__error_visible",
 };
 const currentUser = getCurrentUser();
 const initialCards = getAllCards();
+const avatarImage = document.querySelector(".profile__image");
+const popupAvatar = document.querySelector(".popup_type_change_avatar");
+const popupAvatarForm = document.forms["change-avatar"];
+const AvatarLinkInput = popupAvatarForm.elements["avatar-link"];
 
 // открытие попапа с увеличенной картинкой
 function openPopupImage(link, name) {
@@ -52,6 +62,12 @@ editButton.addEventListener("click", function () {
   profileDescriptionInput.value = profileDescription.textContent;
   clearValidation(popupEditForm, selectors);
   openModal(popupEdit);
+});
+
+// открытие попапа по нажатию на аватар
+avatarImage.addEventListener("click", function () {
+  clearValidation(popupAvatarForm, selectors);
+  openModal(popupAvatar);
 });
 
 // открытие попапа по нажатию на кнопку "создать новое место"
@@ -75,30 +91,73 @@ popups.forEach(function (popup) {
 // функция сохраняет новые данные пользователя в профиль, закрывает попап
 function handleEditFormSubmit(evt) {
   evt.preventDefault();
-  profileTitle.textContent = profileTitleInput.value;
-  profileDescription.textContent = profileDescriptionInput.value;
-  closeModal(popupEdit);
+  const saveButton = popupEditForm.querySelector(
+    selectors.submitButtonSelector
+  );
+  saveButton.textContent = "Сохранение...";
+  updateProfile(profileTitleInput.value, profileDescriptionInput.value)
+    .then((res) => {
+      profileTitle.textContent = profileTitleInput.value;
+      profileDescription.textContent = profileDescriptionInput.value;
+      closeModal(popupEdit);
+      saveButton.textContent = "Сохранить";
+    })
+    .catch((error) => {
+      console.log("Невозможно сохранить изменения данных пользователя", error);
+    });
 }
 
 // событие: нажатие на кнопку "сохранить изменения"
 popupEditForm.addEventListener("submit", handleEditFormSubmit);
 
-// функция сохраняет новое место в начало контейнера, очищает поля формы, закрывает попап
+// функция сохраняет новый аватар, закрывает попап
+function handleChangeAvatarSubmit(evt) {
+  evt.preventDefault();
+  const saveButton = popupAvatarForm.querySelector(
+    selectors.submitButtonSelector
+  );
+  saveButton.textContent = "Сохранение...";
+  updateAvatar(AvatarLinkInput.value)
+    .then((res) => {
+      avatarImage.style["background-image"] =
+        "url(" + AvatarLinkInput.value + ")";
+      closeModal(popupAvatar);
+      saveButton.textContent = "Сохранить";
+    })
+    .catch((error) => {
+      console.log("Невозможно обновить аватар", error);
+    });
+}
+
+// событие: нажатие на кнопку "сохранить новый аватар"
+popupAvatarForm.addEventListener("submit", handleChangeAvatarSubmit);
+
+// функция сохраняет новое место в начало контейнера и на сервер, очищает поля формы, закрывает попап
 function handleNewPlaceAdd(evt) {
   evt.preventDefault();
-  const card = createCard(
-    title.value,
-    link.value,
-    cardTmp,
-    deleteCard,
-    likeCard,
-    openPopupImage
-  );
-  cardsContainer.insertAdjacentElement("afterbegin", card);
-  postNewCard({name: title.value, link: link.value});
-  closeModal(popupNew);
-  popupNewForm.reset();
-  clearValidation(popupNewForm, selectors);
+  const saveButton = popupNewForm.querySelector(selectors.submitButtonSelector);
+  saveButton.textContent = "Сохранение...";
+  postNewCard(title.value, link.value)
+    .then((res) => {
+      const card = createCard(
+        title.value,
+        link.value,
+        0,
+        res._id,
+        false,
+        cardTmp,
+        deleteCard,
+        likeCard,
+        openPopupImage
+      );
+      cardsContainer.insertAdjacentElement("afterbegin", card);
+      closeModal(popupNew);
+      popupNewForm.reset();
+      saveButton.textContent = "Сохранить";
+    })
+    .catch((error) => {
+      console.log("Невозможно сохранить карточку", error);
+    });
 }
 
 // событие: нажатие на кнопку "сохранить новое место"
@@ -109,21 +168,36 @@ enableValidation(selectors);
 
 // вывод всех карточек на страницу
 Promise.all([currentUser, initialCards])
-.then(([user, cards]) => {
-  cards.forEach(function (item) {
-    const createdByOtherUser = (item.owner._id !== user._id);
-    const card = createCard(
-      item.name,
-      item.link,
-      cardTmp,
-      deleteCard,
-      likeCard,
-      openPopupImage,
-      createdByOtherUser
-    );
-    cardsContainer.append(card);
+  .then(([user, cards]) => {
+    cards.forEach(function (item) {
+      const createdByOtherUser = item.owner._id !== user._id;
+      const isLiked = item.likes.some((anyuser) => anyuser._id === user._id);
+      const card = createCard(
+        item.name,
+        item.link,
+        item.likes.length,
+        item._id,
+        isLiked,
+        cardTmp,
+        deleteCard,
+        likeCard,
+        openPopupImage,
+        createdByOtherUser
+      );
+      cardsContainer.append(card);
+    });
+  })
+  .catch((error) => {
+    console.log("Невозможно загрузить карточки с сервера", error);
   });
-})
-.catch((error) => {
-  console.log("Невозможно загрузить карточки с сервера", error)
-})
+
+// при загрузке текущего пользователя отобразить его данные
+currentUser
+  .then((user) => {
+    profileTitle.textContent = user.name;
+    profileDescription.textContent = user.about;
+    avatarImage.style["background-image"] = "url(" + user.avatar + ")";
+  })
+  .catch((error) => {
+    console.log("Невозможно загрузить данные пользователя", error);
+  });
