@@ -60,19 +60,19 @@ function openPopupImage(link, name) {
 editButton.addEventListener("click", function () {
   profileTitleInput.value = profileTitle.textContent;
   profileDescriptionInput.value = profileDescription.textContent;
-  clearValidation(popupEditForm, selectors);
+  clearValidation(popupEditForm, selectors, false);
   openModal(popupEdit);
 });
 
 // открытие попапа по нажатию на аватар
 avatarImage.addEventListener("click", function () {
-  clearValidation(popupAvatarForm, selectors);
+  clearValidation(popupAvatarForm, selectors, true);
   openModal(popupAvatar);
 });
 
 // открытие попапа по нажатию на кнопку "создать новое место"
 addButton.addEventListener("click", function () {
-  clearValidation(popupNewForm, selectors);
+  clearValidation(popupNewForm, selectors, true);
   openModal(popupNew);
 });
 
@@ -94,17 +94,26 @@ function handleEditFormSubmit(evt) {
   const saveButton = popupEditForm.querySelector(
     selectors.submitButtonSelector
   );
-  saveButton.textContent = "Сохранение...";
+  renderLoading(saveButton, false);
   updateProfile(profileTitleInput.value, profileDescriptionInput.value)
     .then((res) => {
       profileTitle.textContent = profileTitleInput.value;
       profileDescription.textContent = profileDescriptionInput.value;
       closeModal(popupEdit);
-      saveButton.textContent = "Сохранить";
     })
     .catch((error) => {
       console.log("Невозможно сохранить изменения данных пользователя", error);
-    });
+    })
+    .finally(() => renderLoading(saveButton, false));
+}
+
+// в зависимости от значения(true/false) изменяется состояние кнопки сохранить
+function renderLoading(saveButton, isLoading) {
+  if (isLoading) {
+    saveButton.textContent = "Сохранение...";
+  } else {
+    saveButton.textContent = "Сохранить";
+  }
 }
 
 // событие: нажатие на кнопку "сохранить изменения"
@@ -116,17 +125,17 @@ function handleChangeAvatarSubmit(evt) {
   const saveButton = popupAvatarForm.querySelector(
     selectors.submitButtonSelector
   );
-  saveButton.textContent = "Сохранение...";
+  renderLoading(saveButton, true);
   updateAvatar(AvatarLinkInput.value)
     .then((res) => {
       avatarImage.style["background-image"] =
         "url(" + AvatarLinkInput.value + ")";
       closeModal(popupAvatar);
-      saveButton.textContent = "Сохранить";
     })
     .catch((error) => {
       console.log("Невозможно обновить аватар", error);
-    });
+    })
+    .finally(() => renderLoading(saveButton, false));
 }
 
 // событие: нажатие на кнопку "сохранить новый аватар"
@@ -136,7 +145,7 @@ popupAvatarForm.addEventListener("submit", handleChangeAvatarSubmit);
 function handleNewPlaceAdd(evt) {
   evt.preventDefault();
   const saveButton = popupNewForm.querySelector(selectors.submitButtonSelector);
-  saveButton.textContent = "Сохранение...";
+  renderLoading(saveButton, true);
   postNewCard(title.value, link.value)
     .then((res) => {
       const card = createCard(
@@ -153,11 +162,11 @@ function handleNewPlaceAdd(evt) {
       cardsContainer.insertAdjacentElement("afterbegin", card);
       closeModal(popupNew);
       popupNewForm.reset();
-      saveButton.textContent = "Сохранить";
     })
     .catch((error) => {
       console.log("Невозможно сохранить карточку", error);
-    });
+    })
+    .finally(() => renderLoading(saveButton, false));
 }
 
 // событие: нажатие на кнопку "сохранить новое место"
